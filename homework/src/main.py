@@ -13,12 +13,13 @@ class ParseArgsMixin:
         self.output_folder = sys.argv[2]
 
 
-def count_words(words):
-    """Count occurrences of each word using a plain dictionary."""
-    word_counts = {}
-    for word in words:
-        word_counts[word] = word_counts.get(word, 0) + 1
-    return word_counts
+class CountWordsMixin:
+    def count_words(self):
+        """Count occurrences of each word using a plain dictionary."""
+        word_counts = {}
+        for word in self.words:
+            word_counts[word] = word_counts.get(word, 0) + 1
+        self.word_counts = word_counts
 
 
 class PreprocessLinesMixin:
@@ -42,43 +43,56 @@ class ReadAllLinesMixin:
         self.lines = lines
 
 
-def split_into_words(lines):
-    """Split lines into individual words and clean punctuation."""
-    words = []
-    for line in lines:
-        words.extend(word.strip(",.!?") for word in line.split())
-    return words
+class SplitIntoWordsMixin:
+    def split_into_words(self):
+        """Split lines into individual words and clean punctuation."""
+
+        words = []
+
+        for line in self.preprocessed_lines:
+            words.extend(word.strip(",.!?") for word in line.split())
+
+        self.words = words
 
 
-def write_word_counts(output_folder, word_counts):
-    """Write word counts to a file in the output folder."""
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-    output_file = os.path.join(output_folder, "wordcount.tsv")
-    with open(output_file, "w", encoding="utf-8") as f:
-        for word, count in word_counts.items():
-            f.write(f"{word}\t{count}\n")
+class WriteWordCountsMixin:
+    def write_word_counts(self):
+        """Write word counts to a file in the output folder."""
+
+        if not os.path.exists(self.output_folder):
+            os.makedirs(self.output_folder)
+
+        output_file = os.path.join(self.output_folder, "wordcount.tsv")
+
+        with open(output_file, "w", encoding="utf-8") as f:
+            for word, count in self.word_counts.items():
+                f.write(f"{word}\t{count}\n")
 
 
 class WordCountApp(
     ParseArgsMixin,
     ReadAllLinesMixin,
     PreprocessLinesMixin,
+    SplitIntoWordsMixin,
+    CountWordsMixin,
+    WriteWordCountsMixin,
 ):
     def __init__(self):
         self.input_folder = None
         self.output_folder = None
         self.lines = None
         self.preprocessed_lines = None
+        self.words = None
+        self.word_counts = None
 
     def run(self):
 
         self.parse_args()
         self.read_all_lines()
         self.preprocess_lines()
-        words = split_into_words(self.preprocessed_lines)
-        word_counts = count_words(words)
-        write_word_counts(self.output_folder, word_counts)
+        self.split_into_words()
+        self.count_words()
+        self.write_word_counts()
 
 
 if __name__ == "__main__":
