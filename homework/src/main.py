@@ -21,19 +21,25 @@ def count_words(words):
     return word_counts
 
 
-def preprocess_lines(lines):
-    """Preprocess lines by normalizing and cleaning text."""
-    return [line.lower().strip() for line in lines]
+class PreprocessLinesMixin:
+    def preprocess_lines(self):
+        """Preprocess lines by normalizing and cleaning text."""
+
+        self.preprocessed_lines = [line.lower().strip() for line in self.lines]
 
 
-def read_all_lines(input_folder):
-    """Read all lines from all files in the input folder."""
-    lines = []
-    for filename in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, filename)
-        with open(file_path, "r", encoding="utf-8") as f:
-            lines.extend(f.readlines())
-    return lines
+class ReadAllLinesMixin:
+
+    def read_all_lines(self):
+        """Read all lines from all files in the input folder."""
+
+        lines = []
+        for filename in os.listdir(self.input_folder):
+            file_path = os.path.join(self.input_folder, filename)
+            with open(file_path, "r", encoding="utf-8") as f:
+                lines.extend(f.readlines())
+
+        self.lines = lines
 
 
 def split_into_words(lines):
@@ -56,18 +62,21 @@ def write_word_counts(output_folder, word_counts):
 
 class WordCountApp(
     ParseArgsMixin,
+    ReadAllLinesMixin,
+    PreprocessLinesMixin,
 ):
     def __init__(self):
         self.input_folder = None
         self.output_folder = None
+        self.lines = None
+        self.preprocessed_lines = None
 
     def run(self):
 
         self.parse_args()
-
-        lines = read_all_lines(self.input_folder)
-        preprocessed_lines = preprocess_lines(lines)
-        words = split_into_words(preprocessed_lines)
+        self.read_all_lines()
+        self.preprocess_lines()
+        words = split_into_words(self.preprocessed_lines)
         word_counts = count_words(words)
         write_word_counts(self.output_folder, word_counts)
 
