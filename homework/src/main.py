@@ -2,6 +2,17 @@ import os
 import sys
 
 
+class ParseArgsMixin:
+    def parse_args(self):
+
+        if len(sys.argv) != 3:
+            print("Usage: python3 -m homework <input_folder> <output_folder>")
+            sys.exit(1)
+
+        self.input_folder = sys.argv[1]
+        self.output_folder = sys.argv[2]
+
+
 def count_words(words):
     """Count occurrences of each word using a plain dictionary."""
     word_counts = {}
@@ -43,22 +54,22 @@ def write_word_counts(output_folder, word_counts):
             f.write(f"{word}\t{count}\n")
 
 
-class WordCountApp:
+class WordCountApp(
+    ParseArgsMixin,
+):
+    def __init__(self):
+        self.input_folder = None
+        self.output_folder = None
 
     def run(self):
 
-        if len(sys.argv) != 3:
-            print("Usage: python3 -m homework <input_folder> <output_folder>")
-            sys.exit(1)
+        self.parse_args()
 
-        input_folder = sys.argv[1]
-        output_folder = sys.argv[2]
-
-        lines = read_all_lines(input_folder)
+        lines = read_all_lines(self.input_folder)
         preprocessed_lines = preprocess_lines(lines)
         words = split_into_words(preprocessed_lines)
         word_counts = count_words(words)
-        write_word_counts(output_folder, word_counts)
+        write_word_counts(self.output_folder, word_counts)
 
 
 if __name__ == "__main__":
